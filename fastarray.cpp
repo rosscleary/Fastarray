@@ -29,35 +29,32 @@ class FastArray {
         while (currIndex < size) {
             startIndices.push_back(currIndex);
             currIndex += increment;
-            endIndices.push_back(min(currIndex, size - 1));
+            endIndices.push_back(min(currIndex, size));
         }
         int numThreads = startIndices.size();
+        vector<thread> threads;
         for (int i = 0; i < numThreads; i++) {
             int arg1 = startIndices[i];
             int arg2 = endIndices[i];
             int arg3 = value;
-            thread t(&FastArray::valueExistsInRange, this, arg1, arg2, arg3);
-            t.join();
+            thread (&FastArray::valueExistsInRange, this, arg1, arg2, arg3).detach();
         }
         return this->result;
     }
 
     void valueExistsInRange(int startIndex, int endIndex, int value) {
+        int count = 0;
         for (int currIndex = startIndex; currIndex < endIndex; currIndex++) {
+            count++;
             if (this->array[currIndex] == value) {
                 this->result = true;
                 return;
             }
         }
+        cout << count << endl;
     }
 };
 
 int main() {
-    int* array = new int[10];
-    for (int i = 0; i < 10; i++) {
-        array[i] = i;
-    }
-    FastArray fastarray(array, 10);
-    cout << fastarray.valueExists(5) << endl;
-    cout << fastarray.valueExists(11) << endl;
+    
 }
