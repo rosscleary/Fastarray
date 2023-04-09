@@ -37,24 +37,34 @@ class FastArray {
             int arg1 = startIndices[i];
             int arg2 = endIndices[i];
             int arg3 = value;
-            thread (&FastArray::valueExistsInRange, this, arg1, arg2, arg3).detach();
+            threads.push_back(thread (&FastArray::valueExistsInRange, this, arg1, arg2, arg3));
+        }
+        for (int i = 0; i < numThreads; i++) {
+            if (threads[i].joinable()) {
+                threads[i].join();
+            }
         }
         return this->result;
     }
 
+    private:
     void valueExistsInRange(int startIndex, int endIndex, int value) {
-        int count = 0;
         for (int currIndex = startIndex; currIndex < endIndex; currIndex++) {
-            count++;
             if (this->array[currIndex] == value) {
                 this->result = true;
                 return;
             }
         }
-        cout << count << endl;
     }
 };
 
 int main() {
-    
+    int* array = new int[10];
+    for (int i = 0; i < 10; i++) {
+        array[i] = i;
+    }
+    FastArray fastArray(array, 10);
+    cout << "Result is " << fastArray.valueExists(9) << endl; // expect true
+    cout << "Reuslt is " << fastArray.valueExists(10) << endl; // expect false
+    return 0;
 }
