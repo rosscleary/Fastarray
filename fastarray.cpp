@@ -6,8 +6,11 @@
 #include <vector>
 #include <cmath>
 #include <thread>
+#include <mutex>
 
 using namespace std;
+
+mutex g_lock;
 
 class FastArray {
     int *array;
@@ -116,39 +119,57 @@ class FastArray {
     }
 
     void valueExistsInRange(int startIndex, int endIndex, int value) {
+        bool found = false;
         for (int currIndex = startIndex; currIndex < endIndex; currIndex++) {
             if (this->array[currIndex] == value) {
-                this->result = true;
-                return;
+                found = true;
+                break;
             }
+        }
+        if (found) {
+            g_lock.lock();
+            this->result = true;
+            g_lock.unlock();
         }
     }
 
     void sumInRange(int startIndex, int endIndex) {
+        int segmentSum = 0;
         for (int currIndex = startIndex; currIndex < endIndex; currIndex++) {
-            this->result += this->array[currIndex];
+            segmentSum += this->array[currIndex];
         }
+        g_lock.lock();
+        this->result += segmentSum;
+        g_lock.unlock();
     }
 
     void minValueInRange(int startIndex, int endIndex) {
+        int segmentMin = INT_MAX;
         for (int currIndex = startIndex; currIndex < endIndex; currIndex++) {
-            this->result = min(this->result, this->array[currIndex]);
+            segmentMin = min(segmentMin, this->array[currIndex]);
         }
+        g_lock.lock();
+        this->result = min(this->result, segmentMin);
+        g_lock.unlock();
     }
 
     void maxValueInRange(int startIndex, int endIndex) {
+        int segmentMax = INT_MIN;
         for (int currIndex = startIndex; currIndex < endIndex; currIndex++) {
-            this->result = max(this->result, this->array[currIndex]);
+            segmentMax = max(segmentMax, this->array[currIndex]);
         }
+        g_lock.lock();
+        this->result = max(this->result, segmentMax);
+        g_lock.unlock();
     }
 };
 
 int main() {
-    int* array = new int[10];
-    for (int i = 0; i < 10; i++) {
+    int* array = new int[10000];
+    for (int i = 0; i < 10000; i++) {
         array[i] = i;
     }
-    FastArray fastArray(array, 10);
+    FastArray fastArray(array, 10000);
     cout << "Result is " << fastArray.valueExists(9) << endl; // expect true
     cout << "Reuslt is " << fastArray.valueExists(10) << endl; // expect false
     cout << "Result is " << fastArray.sum() << endl; // expect 45
